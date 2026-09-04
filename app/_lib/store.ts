@@ -41,7 +41,7 @@ export type FaqAnswer = {
   answer: string;
 };
 
-function ensureDataDir() {
+function ensureUploadsDir() {
   if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
@@ -50,16 +50,21 @@ const jsonCache = new Map<string, unknown>();
 
 function readJson<T>(filePath: string, fallback: T): T {
   if (jsonCache.has(filePath)) return jsonCache.get(filePath) as T;
-  ensureDataDir();
   const data = existsSync(filePath) ? JSON.parse(readFileSync(filePath, "utf-8")) : fallback;
   jsonCache.set(filePath, data);
   return data;
 }
 
+// Vercel 같은 서버리스 환경은 배포된 파일시스템이 읽기 전용이라 실제 저장은 실패한다.
+// Supabase 연동 전까지는 그런 환경에서 화면이 통째로 죽지 않도록, 쓰기 실패를 무시하고
+// 메모리 캐시만 최신 값으로 갱신한다 (같은 서버리스 인스턴스가 살아있는 동안만 유지됨).
 function writeJson(filePath: string, data: unknown) {
-  ensureDataDir();
-  writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
   jsonCache.set(filePath, data);
+  try {
+    writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } catch (error) {
+    console.error(`[store] 파일 저장 실패 (읽기 전용 파일시스템일 수 있음): ${filePath}`, error);
+  }
 }
 
 export function listDocuments(): StoredDocument[] {
@@ -78,7 +83,7 @@ function documentFileName(category: Category): string {
 }
 
 export function saveDocument(category: Category, fileName: string, contentText: string, fileBuffer: Buffer): StoredDocument {
-  ensureDataDir();
+  ensureUploadsDir();
   const storagePath = path.join(UPLOADS_DIR, documentFileName(category));
   writeFileSync(storagePath, fileBuffer);
 
