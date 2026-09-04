@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* 방문자 기기의 다크모드 설정과 무관하게 화이트모드를 기본으로 보여준다 —
+   .dark 클래스가 실제로 어딘가에 붙기 전까지는 dark: 유틸리티가 전혀 적용되지 않는다.
+   나중에 사용자가 직접 고를 수 있는 다크모드 전환 버튼을 추가하면, 그때 <html>에 .dark를 붙이면 된다. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  /* 한양대학교병원 로고에서 추출한 브랜드 색상 */
+  --color-brand: #005090;
+  --color-brand-dark: #00395f;
+  --color-brand-light: #e8f1fa;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
