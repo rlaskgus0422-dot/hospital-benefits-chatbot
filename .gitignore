@@ -36,8 +36,18 @@ yarn-error.log*
 # vercel
 .vercel
 
-# 로컬 임시 저장소 (Supabase 연동 전까지 사용, 업로드 파일·로그 포함)
-/data
+# 로컬 임시 저장소 (Supabase 연동 전까지 사용)
+# 콘텐츠성 데이터(카테고리·질문·FAQ 답변)는 배포 시드용으로 예외적으로 커밋하되,
+# 운영 로그(대화 로그·문의 메시지)와 업로드 파일은 개인정보 우려로 계속 제외한다.
+/data/*
+!/data/categories.json
+!/data/order.json
+!/data/questions.json
+!/data/faq-answers.json
+!/data/documents.json
+/data/uploads
+/data/chat-logs.json
+/data/contact-messages.json
 
 # typescript
 *.tsbuildinfo
