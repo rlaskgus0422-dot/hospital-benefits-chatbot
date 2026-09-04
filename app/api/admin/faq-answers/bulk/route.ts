@@ -62,6 +62,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `한 번에 ${MAX_ROWS}행까지만 업로드할 수 있어요. 파일을 나눠서 올려주세요.` }, { status: 400 });
   }
 
-  const result = bulkUpsertFaqAnswers(rows);
+  const result = await bulkUpsertFaqAnswers(rows);
   return NextResponse.json(result);
 }

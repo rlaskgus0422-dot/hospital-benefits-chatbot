@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  const updated = setChatLogFeedback(logId, body.feedback);
+  const updated = await setChatLogFeedback(logId, body.feedback);
   if (!updated) {
     return NextResponse.json({ error: "해당 로그를 찾을 수 없습니다." }, { status: 404 });
   }

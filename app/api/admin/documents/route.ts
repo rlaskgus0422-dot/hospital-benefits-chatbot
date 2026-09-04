@@ -9,7 +9,7 @@ export async function GET() {
   if (!(await requireAdminSession())) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-  return NextResponse.json({ documents: listDocuments() });
+  return NextResponse.json({ documents: await listDocuments() });
 }
 
 export async function POST(request: Request) {
@@ -21,13 +21,13 @@ export async function POST(request: Request) {
   const category = formData?.get("category");
   const file = formData?.get("file");
 
-  if (!isCategory(category)) {
+  if (!(await isCategory(category))) {
     return NextResponse.json({ error: "카테고리를 선택해주세요." }, { status: 400 });
   }
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "파일을 선택해주세요." }, { status: 400 });
   }
-  if (getDocument(category)) {
+  if (await getDocument(category as string)) {
     return NextResponse.json({ error: "이미 등록된 문서가 있어요. 먼저 기존 문서를 삭제해주세요." }, { status: 409 });
   }
   if (file.type !== "application/pdf") {
@@ -54,6 +54,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "텍스트를 추출할 수 없는 PDF입니다. (스캔본일 수 있어요)" }, { status: 400 });
   }
 
-  const document = saveDocument(category, file.name, contentText, buffer);
+  const document = await saveDocument(category as string, file.name, contentText, buffer);
   return NextResponse.json({ document });
 }

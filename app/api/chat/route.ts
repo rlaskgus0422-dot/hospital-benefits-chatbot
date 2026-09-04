@@ -45,26 +45,26 @@ function parseHistory(value: unknown): HistoryTurn[] {
 const MAX_ANSWER_LENGTH = 1000;
 
 // 카테고리별로 담당자 안내 문구를 등록해뒀으면 그걸 쓰고, 없으면 공통 총무팀 문구를 쓴다.
-function noAnswerMessage(category: Category | null): string {
-  return (category && getContactMessage(category)) || GENERAL_AFFAIRS_CONTACT_MESSAGE;
+async function noAnswerMessage(category: Category | null): Promise<string> {
+  return (category && (await getContactMessage(category))) || GENERAL_AFFAIRS_CONTACT_MESSAGE;
 }
 
 // 한 카테고리 안에서 등록된 FAQ·규정 문서로 답을 찾아본다. 못 찾으면 null — 호출하는 쪽에서 다른 카테고리를 시도할 수 있다.
 // history는 "그럼 언제 받아요?" 같은, 그 자체로는 무슨 얘기인지 알 수 없는 이어지는 질문의 맥락으로만 쓰인다.
 async function tryAnswerInCategory(question: string, category: Category, history: HistoryTurn[]): Promise<string | null> {
-  let faqAnswer = getFaqAnswer(category, question);
+  let faqAnswer = await getFaqAnswer(category, question);
 
   // 정확히 같은 문장은 아니어도, 이미 답변이 등록된 자주 묻는 질문과 의미가 같으면 그 답변을 그대로 재사용한다.
   if (!faqAnswer) {
-    const answeredQuestions = listAnsweredQuestions(category);
+    const answeredQuestions = await listAnsweredQuestions(category);
     const similarQuestion = answeredQuestions.length
       ? await matchFaqQuestion(question, answeredQuestions, category, history)
       : null;
-    if (similarQuestion) faqAnswer = getFaqAnswer(category, similarQuestion);
+    if (similarQuestion) faqAnswer = await getFaqAnswer(category, similarQuestion);
   }
   if (faqAnswer) return faqAnswer;
 
-  const document = getDocument(category);
+  const document = await getDocument(category);
   if (!document) return null;
 
   const raw = await generateAnswer(question, document.contentText, history);
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 
   // 개인정보 마스킹을 가장 먼저 적용한다 — 이후 OpenAI 전송, 로그 저장 모두 이 문장을 사용한다.
   const maskedQuestion = maskPersonalInfo(question);
-  const selectedCategory = isCategory(body?.category) ? body.category : null;
+  const selectedCategory = (await isCategory(body?.category)) ? (body.category as Category) : null;
   const history = parseHistory(body?.history);
 
   let answer: string;
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
     // 선택한 카테고리(또는 처음에는 카테고리가 없었던 경우)에서 못 찾았으면, 질문 내용만으로 실제 어느 카테고리 얘기인지 다시 확인한다.
     // 예: "증명서" 탭에서 "가족수당 금액"을 물으면 여기서 "기본수당/가족수당"으로 다시 잡아 그쪽 답변·담당자 안내를 쓴다.
     if (!found) {
-      const categories = getAllCategories();
+      const categories = await getAllCategories();
       const guessed = matchCategoryBySynonym(maskedQuestion, categories) ?? (await classifyCategory(maskedQuestion, categories));
 
       if (guessed && guessed !== matchedCategory) {
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
       answer = HR_CONTACT_MESSAGE;
       answerType = "hr_referral";
     } else if (matchedCategory) {
-      answer = noAnswerMessage(matchedCategory);
+      answer = await noAnswerMessage(matchedCategory);
       answerType = "no_answer";
     } else {
       answer = GENERAL_AFFAIRS_CONTACT_MESSAGE;
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
   // 로그는 부가 기능이고, 사용자에게는 어쨌든 답을 보여주는 게 우선이다.
   let logId: string | null = null;
   try {
-    logId = appendChatLog({ question: maskedQuestion, answer, matchedCategory, answerType }).id;
+    logId = (await appendChatLog({ question: maskedQuestion, answer, matchedCategory, answerType })).id;
   } catch {
     logId = null;
   }

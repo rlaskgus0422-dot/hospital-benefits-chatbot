@@ -8,11 +8,11 @@ import { getCategoryOrder, getCategoryQuestions } from "./_lib/store";
 export const dynamic = "force-dynamic";
 
 // 기본 화면을 사이드바형으로 채택 (PC/모바일 둘 다에서 카드형·기존형보다 쓰기 편하다고 판단해 결정).
-export default function Home() {
-  const categoryOrder = getCategoryOrder();
+export default async function Home() {
+  const categoryOrder = await getCategoryOrder();
   // 관리자가 새로 추가한 카테고리도 빠짐없이 포함되도록 정적 CATEGORIES가 아닌 동적 목록을 기준으로 순회한다.
   const questionsByCategory = Object.fromEntries(
-    categoryOrder.map((category) => [category, getCategoryQuestions(category)])
+    await Promise.all(categoryOrder.map(async (category) => [category, await getCategoryQuestions(category)] as const))
   ) as Record<Category, string[]>;
 
   return (

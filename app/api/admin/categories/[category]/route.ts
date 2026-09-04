@@ -8,7 +8,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ca
   }
 
   const { category } = await params;
-  if (!getAllCategories().includes(category)) {
+  if (!(await getAllCategories()).includes(category)) {
     return NextResponse.json({ error: "존재하지 않는 카테고리입니다." }, { status: 400 });
   }
 
@@ -17,11 +17,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ca
   if (!name) {
     return NextResponse.json({ error: "새 카테고리 이름을 입력해주세요." }, { status: 400 });
   }
-  if (getAllCategories().includes(name)) {
+  if ((await getAllCategories()).includes(name)) {
     return NextResponse.json({ error: "이미 있는 카테고리입니다." }, { status: 409 });
   }
 
-  const categories = renameCategory(category, name);
+  const categories = await renameCategory(category, name);
   return NextResponse.json({ categories });
 }
 
@@ -31,10 +31,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
 
   const { category } = await params;
-  if (!getAllCategories().includes(category)) {
+  if (!(await getAllCategories()).includes(category)) {
     return NextResponse.json({ error: "존재하지 않는 카테고리입니다." }, { status: 400 });
   }
 
-  const categories = deleteCategory(category);
+  const categories = await deleteCategory(category);
   return NextResponse.json({ categories });
 }

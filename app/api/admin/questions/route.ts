@@ -20,8 +20,9 @@ export async function GET() {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
+  const categories = await getAllCategories();
   const questionsByCategory = Object.fromEntries(
-    getAllCategories().map((category) => [category, getCategoryQuestions(category)])
+    await Promise.all(categories.map(async (category) => [category, await getCategoryQuestions(category)] as const))
   ) as Record<Category, string[]>;
   return NextResponse.json({ questionsByCategory });
 }
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!isCategory(body?.category)) {
+  if (!(await isCategory(body?.category))) {
     return NextResponse.json({ error: "잘못된 카테고리입니다." }, { status: 400 });
   }
 
@@ -41,12 +42,12 @@ export async function POST(request: Request) {
     if (!body.addQuestion.trim()) {
       return NextResponse.json({ error: "질문 내용을 입력해주세요." }, { status: 400 });
     }
-    const questions = addCategoryQuestion(body.category, body.addQuestion);
+    const questions = await addCategoryQuestion(body.category, body.addQuestion);
     return NextResponse.json({ questions });
   }
 
   if (isStringArray(body?.questions)) {
-    setCategoryQuestions(body.category, body.questions);
+    await setCategoryQuestions(body.category, body.questions);
     return NextResponse.json({ questions: body.questions });
   }
 
@@ -55,12 +56,12 @@ export async function POST(request: Request) {
     if (typeof oldQuestion !== "string" || typeof newQuestion !== "string" || !newQuestion.trim()) {
       return NextResponse.json({ error: "잘못된 질문 수정 요청입니다." }, { status: 400 });
     }
-    const questions = renameCategoryQuestion(body.category, oldQuestion, newQuestion);
+    const questions = await renameCategoryQuestion(body.category, oldQuestion, newQuestion);
     return NextResponse.json({ questions });
   }
 
   if (typeof body?.deleteQuestion === "string") {
-    const questions = deleteCategoryQuestion(body.category, body.deleteQuestion);
+    const questions = await deleteCategoryQuestion(body.category, body.deleteQuestion);
     return NextResponse.json({ questions });
   }
 

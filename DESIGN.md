@@ -101,8 +101,14 @@
 
 ### 2-3. 데이터 저장 구조 (최소 스키마)
 
-- **`documents`** (등록된 규정 원문, 카테고리당 최대 1행): `id`, `category`(8개 중 하나, unique), `file_name`, `content_text`(추출된 텍스트), `storage_path`(Storage 파일 위치), `created_at`
-- **`chat_logs`** (질문·답변 로그): `id`, `question`(마스킹 적용된 문장), `answer`, `matched_category`(분류 결과, 없으면 null), `answer_type`(`answered` | `no_answer` | `hr_referral` | `error` 중 하나 — §2-1의 (b)/(c)·(e)/(a)·(d)/오류에 대응), `created_at`
+이후 카테고리 관리·질문 관리·FAQ 답변·담당자 안내 기능이 추가되면서 아래 4개 테이블이 더 생겼다(전체 SQL은 [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) 참고). `category` 이름 변경/삭제는 외래키의 `on update cascade` / `on delete cascade`(또는 `set null`)로 관련 테이블에 자동 전파된다.
+
+- **`categories`** (카테고리 목록과 표시 순서): `name`(기본키), `position`(정렬 순서), `created_at`
+- **`category_questions`** (카테고리별 질문 목록과 순서): `category`(→ `categories.name`), `question`, `position` — 기본키 `(category, question)`
+- **`faq_answers`** (질문별 등록 답변, 비어있으면 규정 문서 근거 답변으로 대체): `category`(→ `categories.name`), `question`, `answer` — 기본키 `(category, question)`
+- **`contact_messages`** (카테고리별 담당자 안내 문구, 없으면 공통 총무팀 문구 사용): `category`(기본키, → `categories.name`), `message`
+- **`documents`** (등록된 규정 원문, 카테고리당 최대 1행): `id`, `category`(→ `categories.name`, unique), `file_name`, `content_text`(추출된 텍스트), `storage_path`(Storage 파일 위치), `created_at`
+- **`chat_logs`** (질문·답변 로그): `id`, `question`(마스킹 적용된 문장), `answer`, `matched_category`(분류 결과, 없으면 null, → `categories.name` on delete set null), `answer_type`(`answered` | `no_answer` | `hr_referral` | `error` 중 하나 — §2-1의 (b)/(c)·(e)/(a)·(d)/오류에 대응), `feedback`(`helpful` | `unhelpful` | null), `created_at`
 
 ### 2-4. 접근 제한 흐름 (`proxy.ts`, 파일 1개)
 

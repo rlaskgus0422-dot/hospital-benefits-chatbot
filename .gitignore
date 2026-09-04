@@ -36,18 +36,8 @@ yarn-error.log*
 # vercel
 .vercel
 
-# 로컬 임시 저장소 (Supabase 연동 전까지 사용)
-# 콘텐츠성 데이터(카테고리·질문·FAQ 답변)는 배포 시드용으로 예외적으로 커밋하되,
-# 운영 로그(대화 로그·문의 메시지)와 업로드 파일은 개인정보 우려로 계속 제외한다.
-/data/*
-!/data/categories.json
-!/data/order.json
-!/data/questions.json
-!/data/faq-answers.json
-!/data/documents.json
-/data/uploads
-/data/chat-logs.json
-/data/contact-messages.json
+# Supabase로 이관 완료 — 더 이상 앱이 참조하지 않는 옛 로컬 저장소(trash-can/data 참고)
+/data
 
 # typescript
 *.tsbuildinfo
@@ -62,3 +52,6 @@ skills-lock.json
 
 .vercel
 .env*
+
+# supabase CLI 로컬 캐시(연결 정보 캐시 등, 커밋 불필요)
+/supabase/.temp

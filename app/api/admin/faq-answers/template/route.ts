@@ -13,7 +13,7 @@ export async function GET() {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const categories = getAllCategories();
+  const categories = await getAllCategories();
   const workbook = new ExcelJS.Workbook();
 
   // 드롭다운이 참조할 카테고리 목록 시트 — 다운로드할 때마다 현재 카테고리로 새로 만들어지므로

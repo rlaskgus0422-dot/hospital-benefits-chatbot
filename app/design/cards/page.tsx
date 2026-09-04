@@ -7,10 +7,10 @@ import { getCategoryOrder, getCategoryQuestions } from "@/app/_lib/store";
 // 관리자가 카테고리/순서를 바꾸면 바로 반영되도록 매 요청마다 새로 렌더링한다.
 export const dynamic = "force-dynamic";
 
-export default function DesignCardsPage() {
-  const categoryOrder = getCategoryOrder();
+export default async function DesignCardsPage() {
+  const categoryOrder = await getCategoryOrder();
   const questionsByCategory = Object.fromEntries(
-    categoryOrder.map((category) => [category, getCategoryQuestions(category)])
+    await Promise.all(categoryOrder.map(async (category) => [category, await getCategoryQuestions(category)] as const))
   ) as Record<Category, string[]>;
 
   return (

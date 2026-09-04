@@ -29,9 +29,11 @@ npm install
 `.env` 파일에 아래 값을 채워주세요.
 
 ```
-OPENAI_API_KEY=       # OpenAI API 키
-ADMIN_PASSWORD=       # 관리자 페이지 로그인 비밀번호
-SESSION_SECRET=       # 관리자 세션 서명용 무작위 값 (openssl rand -hex 32)
+OPENAI_API_KEY=             # OpenAI API 키
+ADMIN_PASSWORD=             # 관리자 페이지 로그인 비밀번호
+SESSION_SECRET=             # 관리자 세션 서명용 무작위 값 (openssl rand -hex 32)
+SUPABASE_URL=                # Supabase 프로젝트 주소
+SUPABASE_SERVICE_ROLE_KEY=   # 서버 전용 Supabase 관리자 키 (절대 클라이언트에 노출 금지)
 ```
 
 ```bash
@@ -43,7 +45,7 @@ npm run lint   # ESLint 검사
 
 ## 데이터 저장 관련 안내
 
-현재 카테고리·FAQ 답변·규정 문서·로그는 서버의 로컬 파일(`data/` 폴더)에 저장합니다. 이는 Supabase 연동 전까지의 임시 방식으로, **Vercel처럼 파일시스템이 읽기 전용인 서버리스 환경에 배포하면 관리자 페이지에서의 저장(카테고리 추가, FAQ 답변 등록, PDF 업로드 등)이 동작하지 않습니다.** 배포 환경에서 이 기능들을 쓰려면 Supabase 등 외부 데이터베이스 연동이 필요합니다.
+카테고리·질문·FAQ 답변·담당자 안내 문구·대화 로그는 Supabase(Postgres)에, 등록된 규정 PDF 원본은 Supabase Storage의 비공개 버킷(`regulation-documents`)에 저장합니다. Vercel처럼 배포된 파일시스템이 읽기 전용인 서버리스 환경에서도 관리자 페이지의 저장 기능이 정상 동작합니다. 스키마는 [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql), 데이터 흐름은 [DESIGN.md](DESIGN.md) §2-3을 참고하세요.
 
 ## 문서
 

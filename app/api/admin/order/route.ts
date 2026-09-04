@@ -11,7 +11,7 @@ export async function GET() {
   if (!(await requireAdminSession())) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-  return NextResponse.json({ categoryOrder: getCategoryOrder() });
+  return NextResponse.json({ categoryOrder: await getCategoryOrder() });
 }
 
 export async function POST(request: Request) {
@@ -21,10 +21,10 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
 
-  if (!isStringArray(body?.categoryOrder) || !body.categoryOrder.every(isCategory)) {
+  if (!isStringArray(body?.categoryOrder) || !(await Promise.all(body.categoryOrder.map(isCategory))).every(Boolean)) {
     return NextResponse.json({ error: "잘못된 카테고리 순서입니다." }, { status: 400 });
   }
-  setCategoryOrder(body.categoryOrder as Category[]);
+  await setCategoryOrder(body.categoryOrder as Category[]);
 
   return NextResponse.json({ ok: true });
 }

@@ -8,10 +8,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
 
   const { category } = await params;
-  if (!isCategory(category)) {
+  if (!(await isCategory(category))) {
     return NextResponse.json({ error: "존재하지 않는 카테고리입니다." }, { status: 400 });
   }
 
-  deleteDocument(category);
+  await deleteDocument(category);
   return NextResponse.json({ ok: true });
 }

@@ -6,7 +6,7 @@ export async function GET() {
   if (!(await requireAdminSession())) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-  return NextResponse.json({ faqAnswers: listFaqAnswers() });
+  return NextResponse.json({ faqAnswers: await listFaqAnswers() });
 }
 
 // answer를 빈 문자열로 보내면 해당 답변을 지운다.
@@ -20,10 +20,10 @@ export async function POST(request: Request) {
   const question = typeof body?.question === "string" ? body.question : "";
   const answer = typeof body?.answer === "string" ? body.answer : "";
 
-  if (!isCategory(category) || !question) {
+  if (!(await isCategory(category)) || !question) {
     return NextResponse.json({ error: "카테고리와 질문이 필요합니다." }, { status: 400 });
   }
 
-  upsertFaqAnswer(category, question, answer);
+  await upsertFaqAnswer(category, question, answer);
   return NextResponse.json({ ok: true });
 }
