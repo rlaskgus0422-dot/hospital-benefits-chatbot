@@ -27,6 +27,8 @@ export default function QuestionManager() {
   const [bulkResult, setBulkResult] = useState<{ added: number; skipped: { row: number; reason: string }[] } | null>(
     null
   );
+  // 서버 저장이 실패했는데도(예: Vercel의 읽기 전용 파일시스템) 화면에는 성공한 것처럼 보이는 걸 막기 위한 에러 배너.
+  const [actionError, setActionError] = useState<string | null>(null);
 
   function loadQuestionsAndAnswers() {
     fetch("/api/admin/questions")
@@ -86,12 +88,16 @@ export default function QuestionManager() {
 
   const activeQuestions = questionsByCategory[activeCategory] ?? [];
 
-  function saveQuestions(category: Category, questions: string[]) {
-    fetch("/api/admin/questions", {
+  async function saveQuestions(category: Category, questions: string[]) {
+    const response = await fetch("/api/admin/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category, questions }),
     });
+    if (!response.ok) {
+      setActionError("순서 저장에 실패했습니다. 새로고침 후 다시 시도해주세요.");
+      loadQuestionsAndAnswers();
+    }
   }
 
   function handleDrop(dropIndex: number) {
@@ -118,6 +124,10 @@ export default function QuestionManager() {
       body: JSON.stringify({ category: activeCategory, addQuestion: question }),
     });
     const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      setActionError("질문 추가에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
     if (data?.questions) {
       setQuestionsByCategory((prev) => ({ ...prev, [activeCategory]: data.questions }));
     }
@@ -141,6 +151,11 @@ export default function QuestionManager() {
       body: JSON.stringify({ category: activeCategory, renameQuestion: { oldQuestion, newQuestion } }),
     });
     const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      setActionError("질문 수정에 실패했습니다. 다시 시도해주세요.");
+      setEditingQuestion(null);
+      return;
+    }
     if (data?.questions) {
       setQuestionsByCategory((prev) => ({ ...prev, [activeCategory]: data.questions }));
 
@@ -172,6 +187,10 @@ export default function QuestionManager() {
       body: JSON.stringify({ category: activeCategory, deleteQuestion: question }),
     });
     const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      setActionError("질문 삭제에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
     if (data?.questions) {
       setQuestionsByCategory((prev) => ({ ...prev, [activeCategory]: data.questions }));
       const key = keyOf(activeCategory, question);
@@ -192,14 +211,21 @@ export default function QuestionManager() {
     const key = keyOf(activeCategory, question);
     const answer = drafts[key] ?? "";
     setSavingKey(key);
+    setActionError(null);
 
-    await fetch("/api/admin/faq-answers", {
+    const response = await fetch("/api/admin/faq-answers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category: activeCategory, question, answer }),
     });
 
     setSavingKey(null);
+
+    if (!response.ok) {
+      setActionError("답변 저장에 실패했습니다. 새로고침 후 다시 시도해주세요.");
+      return;
+    }
+
     setSavedKeys((prev) => {
       const next = new Set(prev);
       if (answer.trim()) next.add(key);
@@ -215,6 +241,12 @@ export default function QuestionManager() {
         카테고리를 고른 뒤 질문을 드래그로 재정렬하거나 새로 추가하세요. 답변을 입력해두면 이 질문을 클릭했을 때 규정
         문서 대신 이 답변이 바로 나가고, 비워두면 규정 문서를 근거로 답합니다.
       </p>
+
+      {actionError && (
+        <p className="mt-3 rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
+          {actionError}
+        </p>
+      )}
 
       <div className="mt-4 rounded-2xl border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
         <div className="flex flex-wrap items-center justify-between gap-2">

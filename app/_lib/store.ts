@@ -55,16 +55,13 @@ function readJson<T>(filePath: string, fallback: T): T {
   return data;
 }
 
-// Vercel 같은 서버리스 환경은 배포된 파일시스템이 읽기 전용이라 실제 저장은 실패한다.
-// Supabase 연동 전까지는 그런 환경에서 화면이 통째로 죽지 않도록, 쓰기 실패를 무시하고
-// 메모리 캐시만 최신 값으로 갱신한다 (같은 서버리스 인스턴스가 살아있는 동안만 유지됨).
+// Vercel 같은 서버리스 환경은 배포된 파일시스템이 읽기 전용이라 실제 저장이 실패할 수 있다.
+// 여기서 실패를 삼키면 관리자 화면에는 "저장 성공"으로 보이는데 실제로는 아무것도 저장되지 않는
+// 조용한 데이터 유실이 생기므로, 그대로 던져서 호출한 라우트가 에러 응답을 내도록 한다.
+// (반대로 챗봇 응답용 로그 저장처럼 실패해도 괜찮은 곳은 호출하는 쪽에서 개별적으로 try/catch한다.)
 function writeJson(filePath: string, data: unknown) {
+  writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
   jsonCache.set(filePath, data);
-  try {
-    writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
-  } catch (error) {
-    console.error(`[store] 파일 저장 실패 (읽기 전용 파일시스템일 수 있음): ${filePath}`, error);
-  }
 }
 
 export function listDocuments(): StoredDocument[] {
